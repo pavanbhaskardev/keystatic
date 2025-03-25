@@ -4,7 +4,7 @@ export default config({
   storage: {
     kind: "github",
     repo: "pavanbhaskardev/keystatic",
-    pathPrefix: "prod",
+    branchPrefix: "",
   },
   collections: {
     posts: collection({
