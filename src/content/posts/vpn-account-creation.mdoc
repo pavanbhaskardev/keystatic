@@ -1,0 +1,138 @@
+---
+title: VPN account creation
+author: avinash-reddy
+---
+Creating VPN accounts for OpenVPN basically means generating separate client credentials (certificates + keys) for each user or device that will connect. Here's how to **create multiple OpenVPN client accounts**, step-by-step:
+
+---
+
+## 🆕 Create a New OpenVPN Client Account
+
+### 🧰 Prerequisites:
+
+You should already be inside your `~/openvpn-ca` directory (or wherever you initialized Easy-RSA). If not:
+
+```
+cd ~/openvpn-ca
+source vars  # only if you're using Easy-RSA v2, for v3 skip this
+
+```
+
+---
+
+### ✅ Step 1: Generate a new client certificate and key
+
+Replace `client2` with your desired username or device name.
+
+```
+./easyrsa gen-req client2 nopass
+./easyrsa sign-req client client2
+
+```
+
+- Say `yes` when asked to confirm signing.
+- You now have:
+  - `pki/private/client2.key`
+  - `pki/issued/client2.crt`
+
+---
+
+### ✅ Step 2: Prepare client config files
+
+You need these files for the client:
+
+- `client.ovpn` (base config)
+- `ca.crt`
+- `client2.crt`
+- `client2.key`
+- `ta.key`
+
+---
+
+### 🧾 Example client config: `client2.ovpn`
+
+Create this file (or copy and edit from `client1.ovpn`):
+
+```
+client
+dev tun
+proto udp
+remote your.public.ip.or.ddns 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+
+<ca>
+# Paste content of ca.crt
+</ca>
+
+<cert>
+# Paste content of client2.crt
+</cert>
+
+<key>
+# Paste content of client2.key
+</key>
+
+<tls-auth>
+# Paste content of ta.key
+</tls-auth>
+
+tls-auth ta.key 1
+cipher AES-256-CBC
+auth SHA256
+verb 3
+
+```
+
+Or use separate files if preferred, and reference like:
+
+```
+ca ca.crt
+cert client2.crt
+key client2.key
+tls-auth ta.key 1
+
+```
+
+---
+
+### ✅ Step 3: Transfer the client files
+
+You can use:
+
+- **SCP**:
+
+  ```
+  scp client2.ovpn user@clientmachine:/path/
+  
+  ```
+
+- **USB drive**
+
+- Or ZIP and email it (not recommended unless encrypted)
+
+---
+
+### ✅ Step 4: Import into OpenVPN Client
+
+Use the OpenVPN GUI on Windows/Linux, or the OpenVPN Connect app on Android/iOS to import the `.ovpn` config file and connect.
+
+---
+
+## 🔁 Repeat for more users
+
+Just repeat:
+
+```
+./easyrsa gen-req clientX nopass
+./easyrsa sign-req client clientX
+
+```
+
+And prepare their respective `.ovpn` files.
+
+---
+
+Would you like a script that automates new account creation and bundles a ready-to-import `.ovpn` file for clients?
